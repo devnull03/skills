@@ -13,8 +13,10 @@
 # detached -> ready -> expose. .env must hold TS_AUTH_KEY (reusable, ephemeral,
 # pre-authorized, tagged $TS_TAG, default tag:colab-temp).
 set -euo pipefail
-D="$HOME/.claude/skills/run-colab/driver.py"
 HERE="$(cd "$(dirname "$0")" && pwd)"
+# run-colab installed next to this skill, whichever agent's skills dir that is
+D="${COLAB_DRIVER:-$HERE/../../run-colab/driver.py}"
+[ -f "$D" ] || { echo "!! run-colab driver not found at $D (set COLAB_DRIVER)"; exit 1; }
 drv() { python3 "$D" "$@"; }
 REMOTE="/content/$(basename "$(git rev-parse --show-toplevel)")"
 cmd="${1:-}"; shift || true

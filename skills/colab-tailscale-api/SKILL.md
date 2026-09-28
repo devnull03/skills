@@ -14,7 +14,8 @@ public exposure and no API token: tailnet membership plus ACLs is the auth.
 Worked example: body-swap, a character-replacement pipeline (ComfyUI + FLUX +
 a local VLM, shipped as a Colab notebook) served this way.
 `examples/body-swap-endpoints.md` is its caller doc; copy that shape for a new
-API. VM work goes through the **run-colab** skill's `driver.py`. Load that skill
+API. VM work goes through the **run-colab** skill's `driver.py` (install it next to
+this one; `deploy.sh` finds it as a sibling, or at `$COLAB_DRIVER`). Load that skill
 too, for its VM rules (A100 first, only the main agent stops VMs, pull results incrementally).
 
 ## 1. The user does this once per API (you can't)
@@ -76,7 +77,7 @@ guarantees API output equals notebook output. Two things break when you do this
 From the project's repo root:
 
 ```bash
-S=~/.claude/skills/colab-tailscale-api/scripts
+S=~/.claude/skills/colab-tailscale-api/scripts   # or wherever this skill is installed
 $S/deploy.sh up myapi svc:my-api 8000 "python -u api/job_server.py --pipeline api/pipeline.py" \
     api/job_server.py api/pipeline.py <other repo files the pipeline needs>
 $S/deploy.sh check http://my-api.<tailnet>.ts.net      # from the laptop, if it's on the tailnet

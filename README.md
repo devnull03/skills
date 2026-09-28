@@ -9,12 +9,17 @@ Claude Code skills I've written, one per directory under `skills/`.
 
 ## Install
 
-Claude Code loads personal skills from `~/.claude/skills/<name>/SKILL.md` and
-follows symlinks, so link each skill from this repo:
+These follow the open Agent Skills layout (a directory with a `SKILL.md` that
+has `name` and `description` frontmatter, plus its scripts), so they work in
+Claude Code, Codex and any agent that reads that format.
 
 ```bash
 git clone https://github.com/devnull03/skills ~/skills
-for s in ~/skills/skills/*/; do ln -sfn "$s" ~/.claude/skills/"$(basename "$s")"; done
+~/skills/install.sh              # links into ~/.claude/skills and ~/.codex/skills
+~/skills/install.sh ~/.agents/skills   # or any other agent's skills dir
 ```
 
-Edits in the repo take effect immediately, with nothing to reinstall.
+The install links each skill rather than copying it, so edits in the clone take
+effect everywhere immediately. An existing folder with the same name is skipped, not
+overwritten. Scripts find each other relative to their own location, so any install
+directory works.

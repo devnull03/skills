@@ -37,7 +37,7 @@ from pathlib import Path
 STATE = Path(os.environ.get("COLAB_STATE", Path.home() / ".config/colab-cli/sessions.json"))
 JOBS = "/content/jobs"
 def _repo() -> Path:
-    # The skill lives in ~/.claude/skills, so the project is wherever the agent
+    # The skill lives in the agent's global skills dir, so the project is wherever the agent
     # is working: the git root of the cwd, else the cwd itself.
     p = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
     return Path(p.stdout.strip()) if p.returncode == 0 else Path.cwd()

@@ -15,7 +15,8 @@ generic goes through the driver. If the project has notes on its Colab setup
 Run the driver from inside the project. Paths are relative to the project root,
 which the driver takes from `git rev-parse` of the cwd. `push` and
 `start --cwd` default to `/content/<project dir name>` on the VM (override:
-`COLAB_REMOTE_REPO`). `D=~/.claude/skills/run-colab/driver.py`.
+`COLAB_REMOTE_REPO`). Below, `D` is `driver.py` in this skill's directory, wherever
+the agent installed it (`~/.claude/skills/run-colab/`, `~/.codex/skills/run-colab/`, ...).
 
 **Three rules that cost the most when broken:**
 1. **The VM bills until `stop`. Only the main agent stops a VM, never a
@@ -37,7 +38,7 @@ set -a; . ./.env; set +a      # the project's keys, if it has any (values must b
 ## Run (agent path) - the whole lifecycle
 
 ```bash
-D=~/.claude/skills/run-colab/driver.py
+D=~/.claude/skills/run-colab/driver.py   # or ~/.codex/skills/..., wherever this skill lives
 python3 $D sessions                 # what exists - the CLI's state file is the only truth
 python3 $D new myexp                # A100; if all 3 A100 slots are taken, falls back to G4 (~14 s)
 python3 $D probe myexp              # GPU/disk/RAM/procs + VM clock + age of each job log
@@ -113,22 +114,25 @@ python3 $D frames myexp /content/out/armA.mp4 results/vid/armA --n 8     # or --
 ## Delegate: who does what
 
 `watch` alone is the big win (one blocking call instead of N polling turns, ~10x).
-A haiku subagent is a further ~2x and frees the main model, but costs ~23k
-tokens before it does anything, so **don't delegate a 30-second check.**
+If your agent can spawn subagents, a small, cheap model running the watch is a further ~2x
+and frees the main model. It costs ~23k tokens before it does anything, so
+**don't delegate a 30-second check.** If it can't, run `watch` yourself in the
+foreground: it blocks, so it's still one call.
 
 | Work | Model |
 |---|---|
 | Research, reading images, deciding the next run, `new`/`stop`, code changes | main model |
-| A long `watch` (with `--sync`), big logs, pass/fail counts | **haiku** |
-| Publishing already-decided results (docs, uploads) | **sonnet** |
+| A long `watch` (with `--sync`), big logs, pass/fail counts | smallest model (e.g. Claude Haiku) |
+| Publishing already-decided results (docs, uploads) | mid model (e.g. Claude Sonnet) |
 
-Watcher prompt (fill in the placeholders; keep the output shape):
+Watcher prompt, shown here in Claude Code's `Agent` syntax. Fill in the placeholders
+and keep the output shape; other agents take the same prompt text.
 
 ```
 Agent(model: "haiku", subagent_type: "general-purpose", description: "Watch colab job", prompt: """
 Run exactly this one command (it blocks up to 90 min) and nothing else:
 
-cd <repo root> && python3 ~/.claude/skills/run-colab/driver.py watch <SESSION> <JOB> --interval 60 --max-min 90 --done '<DONE REGEX>' --sync <REMOTE_OUT_DIR> <LOCAL_DIR>
+cd <repo root> && python3 <skill dir>/driver.py watch <SESSION> <JOB> --interval 60 --max-min 90 --done '<DONE REGEX>' --sync <REMOTE_OUT_DIR> <LOCAL_DIR>
 
 Exit code: 0=done, 2=stalled, 3=timeout, 4=process died.
 Reply with AT MOST 6 lines, exactly:
@@ -142,11 +146,11 @@ Do not interpret results, read other files, or start/stop/probe anything.
 
 ## Waiting correctly
 
-- **`run_in_background: true` returns immediately**; it is not a pause. A
+- **Background shell commands return immediately** (Claude Code: `run_in_background: true`); they are not a pause. A
   string of background `sleep`s has led to dozens of polls in a few minutes and
   misreading 30 s of silence as a stall. To block, run `watch` in the
   foreground (or in a subagent).
-- **One watcher per job, and kill it (`TaskStop`) when the job or its VM
+- **One watcher per job, and kill it (Claude Code: `TaskStop`) when the job or its VM
   ends.** Stale watchers each hold a queued exec on the single kernel and make
   every later command time out (~1 h lost once).
 - Judge elapsed time from `probe`'s `clock` and `last write Ns ago` lines,
@@ -208,7 +212,6 @@ Do not interpret results, read other files, or start/stop/probe anything.
 
 ## Sharing
 
-Tracked at github.com/devnull03/skills. Install by symlinking
-`skills/run-colab` into `~/.claude/skills/`. Users need the `colab` CLI
-authenticated with their own account. Scripts can find the driver at
-`~/.claude/skills/run-colab/driver.py`, or at `$COLAB_DRIVER`.
+Tracked at github.com/devnull03/skills. `install.sh` there links it into every
+agent's skills directory. Users need the `colab` CLI authenticated with their
+own account. Scripts find the driver at `$COLAB_DRIVER` if set.
