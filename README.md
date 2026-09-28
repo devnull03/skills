@@ -1,4 +1,4 @@
-# claude-skills
+# skills
 
 Claude Code skills I've written, one per directory under `skills/`.
 
@@ -13,8 +13,8 @@ Claude Code loads personal skills from `~/.claude/skills/<name>/SKILL.md` and
 follows symlinks, so link each skill from this repo:
 
 ```bash
-git clone https://github.com/devnull03/claude-skills ~/claude-skills
-for s in ~/claude-skills/skills/*/; do ln -sfn "$s" ~/.claude/skills/"$(basename "$s")"; done
+git clone https://github.com/devnull03/skills ~/skills
+for s in ~/skills/skills/*/; do ln -sfn "$s" ~/.claude/skills/"$(basename "$s")"; done
 ```
 
 Edits in the repo take effect immediately, with nothing to reinstall.

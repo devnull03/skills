@@ -208,7 +208,7 @@ Do not interpret results, read other files, or start/stop/probe anything.
 
 ## Sharing
 
-Tracked at github.com/devnull03/claude-skills. Install by symlinking
+Tracked at github.com/devnull03/skills. Install by symlinking
 `skills/run-colab` into `~/.claude/skills/`. Users need the `colab` CLI
 authenticated with their own account. Scripts can find the driver at
 `~/.claude/skills/run-colab/driver.py`, or at `$COLAB_DRIVER`.
